@@ -9,6 +9,9 @@
 /out/
 *.apk
 *.spk
+# 例外：releases/ 目录下的成品 APK 是“可下载的发布件”（每个约 36 KB），
+# 体积很小、且用户需要直接从这里下载刷机，所以允许入库。
+!/releases/*.apk
 *.dex
 *.class
 *.o

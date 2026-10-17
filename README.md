@@ -6,7 +6,10 @@
 
 
 **仓库地址：** <https://github.com/wangjunhan131/PMCA_IntervalCapture>  
-**APK 下载：** <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases>  
+**APK 下载（直接下这个文件即可刷机）：** [releases/PMCA_IntervalCapture-v1.0.2.apk](releases/PMCA_IntervalCapture-v1.0.2.apk)  
+　　快速链接：<https://github.com/wangjunhan131/PMCA_IntervalCapture/raw/main/releases/PMCA_IntervalCapture-v1.0.2.apk>  
+**校验值：** 见 [releases/SHA256SUMS.txt](releases/SHA256SUMS.txt)（36,773 字节，SHA256 `366D1D5F…58FE78`）  
+**版本说明：** 见 [docs/07-发行说明-v1.0.2.md](docs/07-发行说明-v1.0.2.md)  
 **从源码编译：** 见 [docs/01-编译环境搭建.md](docs/01-编译环境搭建.md)  ·  **刷入相机：** 见 [docs/02-打包与PMCA-RE刷入教程.md](docs/02-打包与PMCA-RE刷入教程.md)
 
 ---
