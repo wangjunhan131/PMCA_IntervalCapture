@@ -227,3 +227,15 @@ powershell -ExecutionPolicy Bypass -File tools\run-logic-tests.ps1
 
 - 想发布可刷机版本：把打好的 `PMCA_IntervalCapture.apk` 附到 GitHub **Releases**（不要提交进 git 历史）。
 - 完整源码合集（单文件通读版）：[docs/05-完整源码合集.md](docs/05-完整源码合集.md)。
+- 上传到 GitHub 的完整流程（含本机已就绪的 SSH 密钥、一键推送脚本）：[docs/06-GitHub上传与发布指南.md](docs/06-GitHub上传与发布指南.md)。
+
+一键推送到自己的 GitHub 账号：
+
+```powershell
+# 先把公钥加到 https://github.com/settings/ssh/new （只需一次）
+powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的GitHub用户名
+```
+
+> 脚本会自动配置 `origin`、校验 SSH、推送 `main` 和 `v1.0.0` 标签。
+> 加 `-Check` 只做检查不推送；加 `-Token ghp_xxx` 可改用 HTTPS + PAT。
+

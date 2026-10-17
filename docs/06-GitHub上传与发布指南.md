@@ -9,6 +9,53 @@
 
 ---
 
+## 0. 本机现状（2026-10-17 已就绪，只剩“授权”一步）
+
+| 项目 | 状态 |
+| --- | --- |
+| Git | ✅ 便携版 MinGit 已装在 `D:\sony\build-support\mingit\cmd\git.exe`（1 条命令即可用） |
+| 本地仓库 | ✅ `git init` 完成，主分支 `main`，首个提交 `0b11266`，入库 40 个文件 |
+| 上传前检查 | ✅ 无 `android-4.1.1.4.jar`、无 keystore、无 `build/`、无 `*.apk` |
+| 换行符/编码 | ✅ `.gitattributes` 已固定：`.ps1` 走 CRLF，Java/MD 走 LF，二进制不转换 |
+| SSH 密钥 | ✅ 已生成 `C:\Users\Administrator\.ssh\id_ed25519`（ed25519，无口令） |
+| SSH 连通 | ✅ 22 端口通，主机指纹 `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`（与 GitHub 官方一致） |
+| GitHub 网络 | ✅ 走本机代理 `127.0.0.1:7892`，`git ls-remote` 1.3 秒 |
+| 一键推送脚本 | ✅ `tools\push-to-github.ps1`（自动找 git、自检、推送、打标签） |
+| 离线备份 | ✅ `build\release\PMCA_IntervalCapture-src-v1.0.0.zip`（308 KB）与 `…-v1.0.0.bundle`（300 KB） |
+| **缺什么** | ⏳ **GitHub 账号授权**：公钥还没添加到你的 GitHub 账号（这一步必须由你本人操作，密码/token 不需要给任何人） |
+
+### 0.1 你只需做这 1 步（约 30 秒）
+
+1. 浏览器打开 <https://github.com/settings/ssh/new>（没登录会先让你登录）
+2. **Title** 随便填：`PMCA-A6000`
+3. **Key type** 选 `Authentication Key`
+4. **Key** 里粘贴下面这一整行（就是本机公钥）：
+
+```text
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHypXsHyau7v/fiwVcoyxg6kxdMquF8U47oLKvnaDRUu pmca-intervalcapture@WIN-20250119OCK
+```
+
+5. 点 **Add SSH key**，回到本工程根目录执行（把 `你的用户名` 换成 GitHub 用户名）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的用户名
+```
+
+脚本会自动：加 `origin` → 校验 SSH → `git push -u origin main` → 打 `v1.0.0` 标签并推送。
+如果脚本提示“SSH 认证未通过”，说明第 5 步还没生效，等 10 秒重跑即可。
+
+> 想先看看会推什么、不真正推送：加 `-Check` 参数。
+> 不想用 SSH（比如 22 端口被封）也可以改用 HTTPS + Token：
+> `powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的用户名 -Token ghp_xxxxx`
+
+### 0.2 还没有 GitHub 账号？
+
+先到 <https://github.com/signup> 注册（需邮箱验证），然后回到 0.1 做那 1 步。
+不想注册也能分享：`build\release\PMCA_IntervalCapture-src-v1.0.0.zip` 直接发给别人，
+对方解压后按 [docs/01-编译环境搭建.md](01-编译环境搭建.md) 就能自己构建。
+
+---
+
 ## 1. 前置：安装并配置 Git
 
 ### 1.1 安装
