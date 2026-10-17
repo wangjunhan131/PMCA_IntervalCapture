@@ -8,6 +8,7 @@
 **仓库地址：** <https://github.com/wangjunhan131/PMCA_IntervalCapture>  
 **APK 下载：** <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases>  
 **从源码编译：** 见 [docs/01-编译环境搭建.md](docs/01-编译环境搭建.md)  ·  **刷入相机：** 见 [docs/02-打包与PMCA-RE刷入教程.md](docs/02-打包与PMCA-RE刷入教程.md)
+
 ---
 
 ## 1. 这个项目是什么 / 不是什么
