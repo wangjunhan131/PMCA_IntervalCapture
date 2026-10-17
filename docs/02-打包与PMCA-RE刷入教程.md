@@ -89,7 +89,7 @@ $zip.Dispose()
 | 检查项 | 期望值 | 不满足的后果 |
 | --- | --- | --- |
 | `minSdkVersion` | `10` | >10 时相机拒绝安装或运行崩溃 |
-| `versionCode` | 存在且为整数（当前 `1`） | PMCA-RE 解析失败、安装报错 |
+| `versionCode` | 存在且为整数（当前 `2`） | PMCA-RE 解析失败、安装报错 |
 | 签名方案 | v1 = true（JAR signing），且 v2/v3/v4 全部为 false | Android 2.3.7 只认 JAR 签名；v2+ 签名块对老系统无意义，纯 v1 最稳 |
 | 私有类是否误打包 | `dexdump -f` 的 `Class descriptor` 里**没有** `com/sony/...` | 与固件同名类冲突 → 启动即崩 |
 | 语言级别 | class 文件 major version ≤ 52（Java 8） | d8 或相机 Dalvik 无法解析 |
@@ -131,7 +131,7 @@ $zip.Dispose()
 | 电量 | **≥ 80%**，刷入全程不要关机、不要拔线 |
 | USB 线 | 能传数据的 micro-USB 线（只能充电的线不行，这是最常见的失败原因） |
 | 电脑 | Windows 10/11（PMCA-RE 使用系统自带的 MTP/大容量存储驱动，通常无需装驱动） |
-| 工具 | [Sony-PMCA-RE releases](https://github.com/ma1co/Sony-PMCA-RE/releases) 里的 `pmca-gui.exe`（图形界面）或 `pmca-console`（命令行） |
+| 工具 | [Sony-PMCA-RE releases](https://github.com/ma1co/Sony-PMCA-RE/releases) 里的 pmca-gui-v0.18-win.exe（图形界面）或 pmca-console-v0.18-win.exe（命令行）。**注意：PyPI 上没有 pmca-re 包，pip install pmca-re 必定失败**，只能下 prebuilt exe |
 | 安装包 | 本文第一部分产出的 `PMCA_IntervalCapture.apk` |
 
 ### 2.2 相机端设置（关键，90% 的失败都出在这里）
@@ -252,7 +252,11 @@ SPK 的优点是可以作为单个文件离线分发/备份；缺点是仍要经
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
-| `pmca-console info` 提示 `No devices found` | 相机 USB 模式不是 MTP / 线只能充电 / 相机没开机 / 驱动异常 | 改成 MTP；换原装数据线；重插；Windows 设备管理器确认无黄色感叹号 |
+| `pmca-console info` 提示 `No devices found` | 相机 USB 模式不是 MTP / 线只能充电 / 相机没开机 / 驱动异常 | 改成 MTP；换原装数据线；重插；Windows 设备管理器确认无黄色感叹号（在“便携设备/Portable Devices”下应出现 `ILCE-6500`）。**实测补充**：Windows 已能识别为 MTP 设备、但 pmca-re 仍报找不到时，通常是**上一个 pmca 进程没退干净**——在任务管理器结束所有 `pmca-gui`/`pmca-console` 再重试 |
+| 安装报 `Exception: MTP SendCommand failed: 0x-7ff8fe4f` | 该值按 32 位还原是 `0x800701B1`（`ERROR_NO_SUCH_DEVICE`）：上传途中相机重新枚举、WPD 句柄失效 | **不要改 APK**，直接重跑 `install -f`，第 2~3 次即可成功 |
+| 安装报 `Exception: MTP SendCommand failed: 0x-7ff8ff56` | 该值是 `0x800700AA`（`ERROR_BUSY`）：相机还在“切 MTP / 切 app install 模式”，端口被占用 | 等 3~5 秒再重试；不要连点 |
+| `pmca-gui` 双击后窗口一闪就消失（无任何界面） | 下载的 exe 被网络/代理截断，PyInstaller 自解压校验失败（控制台会报 `Cannot open PyInstaller archive from executable`） | 重新下载并**核对文件字节数**：`pmca-gui-v0.18-win.exe` 应为 **10,195,086** 字节，`pmca-console-v0.18-win.exe` 应为 **7,651,552** 字节；代理不稳定时用 `curl -C -` 断点续传 |
+| 安装日志出现 `Warning: Invalid apk file` | APK 的 manifest 里没有 `<uses-sdk>` 节点，PMCA-RE 的 `checkApk()` 解析 `minSdkVersion` 时抛异常被吞（v1.0.0 的问题） | 用 v1.0.1 及以后的 APK（已补 `<uses-sdk minSdkVersion="10" targetSdkVersion="10" />`） |
 | 识别到相机但 install 卡在 `Switching to app install mode` | 相机侧弹窗未确认；USB 被其他程序占用（PlayMemories Home、图片导入软件） | 关掉其他相机软件；在相机屏幕上确认；重插 USB |
 | `Task completed successfully` 但相机里找不到应用 | 没关机重启；相机应用列表缓存未刷新 | 关机再开机；`MENU → 应用程序 → 应用程序列表` 再找 |
 | 应用一闪就退回相机界面 | 私有 API 签名不匹配 / 桩被误打包 / 调用了固件不存在的接口 | 检查 dex 是否含 `com/sony/scalar` 类定义；确认 `compileOnly`；查看 `PMCACAP/LOG.TXT` |

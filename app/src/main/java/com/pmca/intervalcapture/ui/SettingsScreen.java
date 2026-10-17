@@ -136,7 +136,7 @@ public final class SettingsScreen {
         canvas.drawText("间隔拍照  |  参数设置", 16, 31, titlePaint);
         valuePaint.setTextSize(UiTheme.TEXT_HINT);
         valuePaint.setColor(UiTheme.COLOR_TEXT_DIM);
-        UiTheme.drawTextRight(canvas, valuePaint, "PMCA_IntervalCapture v1.0", UiTheme.SCREEN_W - 14, 29);
+        UiTheme.drawTextRight(canvas, valuePaint, "PMCA_IntervalCapture v1.0.2", UiTheme.SCREEN_W - 14, 29);
         valuePaint.setTextSize(UiTheme.TEXT_VALUE);
         valuePaint.setColor(UiTheme.COLOR_TEXT);
 
@@ -174,7 +174,9 @@ public final class SettingsScreen {
         }
         if (statusLine != null) {
             warnPaint.setColor(cameraOk ? UiTheme.COLOR_TEXT_DIM : UiTheme.COLOR_ERROR);
-            canvas.drawText(statusLine, 16, warnY + 34, warnPaint);
+            // 最长 2 行：失败原因可能包含异常类名，单行放不下
+            UiTheme.drawTextWrapped(canvas, warnPaint, statusLine, 16, warnY + 34,
+                    UiTheme.SCREEN_W - 32, 2, 17f);
             warnPaint.setColor(UiTheme.COLOR_WARN);
         }
 

@@ -21,12 +21,13 @@ import com.sony.scalar.hardware.CameraEx;
  *    分别用于绑定预览显示面、开启预览、关闭预览。关闭预览可以显著降低机身发热
  *    （界面上的“预览开关”就是控制这里）。
  *
- * 4. {@code Camera.takePicture(ShutterCallback, PictureCallback, PictureCallback)}
- *    唯一触发静态照片的接口。三个回调全部传 null 的含义是：
- *      - 不使用应用侧 JPEG 回调；
- *      - 照片由相机固件按照“机内图像质量/文件格式（JPG / RAW / JPG+RAW）”设置
- *        直接编码并写入 SD 卡；
- *      - 应用只负责触发，不参与编码，也就不会额外生成视频。
+ * 4. {@code CameraEx.burstableTakePicture()}
+ *    PMCA 平台上触发静态照片的推荐接口（必须在 open() 之后、且相机空闲时调用）：
+ *      - 应用不接收 JPEG 数据，照片由相机固件按机内设置
+ *        （JPG / RAW / JPG+RAW、画质、色彩空间）直接编码并写入 SD 卡；
+ *      - 触发后固件回调 ShutterListener.onShutter(...)，应用在那时调用
+ *        cancelTakePicture() 结束连拍状态并恢复预览；
+ *      - 应用只负责“扣扳机”，不参与编码，因此绝不会额外生成视频。
  *    ★ 本应用【绝不】调用 MediaRecorder、也不调用任何视频录制接口。
  *
  * 5. {@code CameraEx.setShutterListener(CameraEx.ShutterListener)}
@@ -82,17 +83,10 @@ public final class CaptureService {
     private boolean firstShotDone = false;
     /** 本次任务是否需要锁定 AE/AF */
     private boolean lockAeAf = true;
-
-    /** API 10 中 Camera.ShutterCallback 是接口，匿名实现即可（不要用 lambda） */
-    private final Camera.ShutterCallback shutterCallback = new Camera.ShutterCallback() {
-        @Override
-        public void onShutter() {
-            shutterFired = true;
-            if (callback != null) {
-                callback.onShotTaken();
-            }
-        }
-    };
+    /** 最近一次失败的详细原因（用于在相机屏幕上显示，便于排查真机问题） */
+    private String lastError = null;
+    /** 本次触发拍摄前预览是否在运行：快门回调后需要恢复预览 */
+    private boolean restorePreviewAfterShot = false;
 
     public CaptureService(CaptureCallback callback) {
         this.callback = callback;
@@ -112,20 +106,26 @@ public final class CaptureService {
         this.lockAeAf = lockAeAfOnFirst;
         this.firstShotDone = false;
         try {
-            // ① 通过 Sony 无参构造函数拿到 CameraEx 实例，再调用 open 打开相机。
+            // ① 调用 Sony 的【静态工厂方法】CameraEx.open(cameraId, options) 打开相机。
+            //    ★ 注意：在索尼固件里 open 是 public static 方法，
+            //      必须写成 CameraEx.open(...)，不能写 new CameraEx().open(...)；
+            //      CameraEx 自身没有公开构造器（固件里整个类没有 <init>），
+            //      写成 new CameraEx() 会在真机上抛 NoSuchMethodError。
             //    第一个参数 CAMERA_ID=0 表示主（唯一）成像器；
             //    OpenOptions 传 null 表示完全沿用相机固件当前的拍摄设置
             //    （测光模式、AF 模式、画质、JPG/RAW 格式等都由机内菜单决定）。
             //    返回值是一个 CameraEx 实例，之后所有索尼接口都通过它调用。
-            cameraEx = new CameraEx().open(CAMERA_ID, null);
+            cameraEx = CameraEx.open(CAMERA_ID, null);
             if (cameraEx == null) {
-                AppLog.error("CameraEx.open 返回 null");
+                lastError = "CameraEx.open 返回 null（可能机内正处在非静态照片模式）";
+                AppLog.error(lastError);
                 return false;
             }
             // ② 取普通静态拍摄通道
             normalCamera = cameraEx.getNormalCamera();
             if (normalCamera == null) {
-                AppLog.error("getNormalCamera 返回 null");
+                lastError = "getNormalCamera 返回 null";
+                AppLog.error(lastError);
                 close();
                 return false;
             }
@@ -170,6 +170,10 @@ public final class CaptureService {
             }
             return true;
         } catch (Throwable t) {
+            // ★ 真机排查关键：把异常类型与消息原样保留下来，
+            //   界面会把它显示在相机屏幕上（例如 java.lang.NoSuchMethodError: ...）。
+            //   历史上 A6500 初始化失败就是靠这一行定位到“open 被误写成实例方法”的。
+            lastError = t.getClass().getSimpleName() + ": " + t.getMessage();
             AppLog.error("打开相机失败", t);
             close();
             return false;
@@ -208,6 +212,14 @@ public final class CaptureService {
 
     public boolean isOpened() {
         return opened;
+    }
+
+    /**
+     * 最近一次打开/拍摄失败的详细原因（异常类名 + message）。
+     * 界面会把它显示在相机屏幕上，方便没有电脑时也能看到真实错误。
+     */
+    public String getLastError() {
+        return lastError;
     }
 
     public boolean isCaptureInFlight() {
@@ -314,13 +326,22 @@ public final class CaptureService {
             }
             captureInFlight = true;
             shutterFired = false;
-            // Camera.takePicture：真正触发静态照片写入 SD 卡
-            normalCamera.takePicture(shutterCallback, null, null);
+            // 记录触发前的预览状态：快门回调里要据此恢复预览
+            restorePreviewAfterShot = previewRunning;
+            // ★ 真正触发静态照片：cameraEx.burstableTakePicture()。
+            //   这是 Sony PMCA 平台上最可靠的“单张静态照片”触发方式
+            //   （官方示例与 OpenMemories 系应用都用它）：
+            //     - 调用后由固件按机内设置（JPG / RAW / JPG+RAW）直接编码并写入 SD 卡；
+            //     - 应用不接收任何 JPEG 数据，也【绝不】调用 MediaRecorder 或视频接口；
+            //     - 快门动作完成后固件回调 ShutterListener.onShutter(...)，
+            //       我们在那个回调里 cancelTakePicture() 结束本次连拍状态并恢复预览。
+            cameraEx.burstableTakePicture();
             AppLog.info("触发拍摄：第 " + (firstShotDone ? "后续" : "首") + " 张，对焦=" + needFocus);
             return true;
         } catch (Throwable t) {
             captureInFlight = false;
-            AppLog.error("takePicture 失败", t);
+            lastError = t.getClass().getSimpleName() + ": " + t.getMessage();
+            AppLog.error("触发拍摄失败", t);
             return false;
         }
     }
@@ -345,11 +366,37 @@ public final class CaptureService {
 
     /**
      * 处理快门回调（PMCA SDK 的 ShutterListener，运行在固件线程）。
+     * <p>
+     * burstableTakePicture() 触发的是“连拍式”拍摄状态，快门动作后必须调用
+     * cancelTakePicture() 把它停掉，否则相机会一直停在连拍状态、无法拍下一张；
+     * 停掉之后再恢复预览，画面才会回到实时取景。
      */
     private void handleShutterStatus(int status) {
+        shutterFired = true;
+        // ① 结束本次“连拍式”触发状态，让相机回到可再次触发的空闲状态
+        if (cameraEx != null) {
+            try {
+                cameraEx.cancelTakePicture();
+            } catch (Throwable t) {
+                AppLog.warn("cancelTakePicture 异常：" + t.getMessage());
+            }
+        }
+        // ② 恢复实时预览（如果触发前预览是开着的）
+        if (restorePreviewAfterShot && normalCamera != null) {
+            try {
+                normalCamera.startPreview();
+                previewRunning = true;
+            } catch (Throwable t) {
+                AppLog.warn("恢复预览失败：" + t.getMessage());
+            }
+            restorePreviewAfterShot = false;
+        }
         if (status == CameraEx.ShutterListener.STATUS_OK) {
             // 快门正常动作：照片开始写卡，等待 StoreImageComplete 回调
             AppLog.info("快门动作 OK");
+            if (callback != null) {
+                callback.onShotTaken();
+            }
         } else if (status == CameraEx.ShutterListener.STATUS_CANCELED) {
             AppLog.warn("快门被取消");
             captureInFlight = false;

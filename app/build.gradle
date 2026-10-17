@@ -19,8 +19,8 @@ android {
         applicationId "com.pmca.intervalcapture"
         minSdkVersion 10
         targetSdkVersion 10
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
         // 相机屏幕为 640x480，不支持多语言资源目录以外的限定符，这里只保留默认配置
     }
 

@@ -53,6 +53,9 @@ public class CaptureActivity extends Activity {
     private static final int MODE_CONFIRM_DIALOG = 4;
 
     /** 界面刷新间隔（毫秒）：100ms 即倒计时显示精度 0.1 秒 */
+    /** 是否在屏幕右下角显示按键诊断角标（发布正式版可改 false） */
+    private static final boolean DEBUG_OVERLAY = true;
+
     private static final long TICK_MS = 100L;
 
     /* ============================ 状态字段 ============================ */
@@ -199,6 +202,9 @@ public class CaptureActivity extends Activity {
         super.onResume();
         AppLog.info("onResume");
         notifyAppInfo();
+        // 应用在前台期间禁止相机自动关机：长间隔拍摄时可能几分钟才拍一张，
+        // 一旦固件自动关机，任务就会中断（见 setAutoPowerOffMode 注释）。
+        setAutoPowerOffMode(false);
         uiHandler.removeCallbacks(tickRunnable);
         uiHandler.postDelayed(tickRunnable, TICK_MS);
     }
@@ -210,6 +216,7 @@ public class CaptureActivity extends Activity {
         // 被相机固件切走（例如打开播放界面）时，必须先停止拍摄并释放相机，
         // 否则固件会认为相机被占用，出现“无法拍照”。
         stopTaskInternal("应用被切换到后台，拍摄已停止", true);
+        setAutoPowerOffMode(true);
         uiHandler.removeCallbacks(tickRunnable);
     }
 
@@ -221,6 +228,7 @@ public class CaptureActivity extends Activity {
         closeCamera();
         healthMonitor.close();
         releaseWakeLock();
+        setAutoPowerOffMode(true);
     }
 
     /* ============================ 相机打开 / 关闭 ============================ */
@@ -240,7 +248,18 @@ public class CaptureActivity extends Activity {
                     @Override
                     public void run() {
                         cameraOk = ok;
-                        cameraStatusLine = ok ? null : "相机初始化失败：请确认机内拍摄模式为静态照片(P/A/S/M)，然后返回重试";
+                        if (ok) {
+                            cameraStatusLine = null;
+                        } else {
+                            // 打开失败时把 CaptureService 记录的【真实异常】（类名 + message）
+                            // 一起显示出来：相机上没有电脑、看不到 logcat，这是唯一线索。
+                            String detail = (captureService == null) ? null : captureService.getLastError();
+                            if (detail != null && detail.length() > 0) {
+                                cameraStatusLine = "相机初始化失败：" + detail;
+                            } else {
+                                cameraStatusLine = "相机初始化失败：请确认机内拍摄模式为静态照片(P/A/S/M)，然后返回重试";
+                            }
+                        }
                         if (!ok) {
                             AppLog.error("相机打开失败");
                         }
@@ -270,6 +289,48 @@ public class CaptureActivity extends Activity {
         }
         cameraOk = false;
     }
+    /* ============================ 自动关机抑制（APO） ============================ */
+
+    /** 当前是否已经请求固件“禁止自动关机”，避免重复发同一个广播 */
+    private boolean apoSuppressed = false;
+
+    /* ---------- 按键诊断（显示在屏幕右下角，便于真机排查） ---------- */
+    private int lastScanCode = -1;
+    private int lastKeyCode = -1;
+    private String lastActionName = null;
+
+    /**
+     * 请求相机固件开启/恢复正常自动关机（APO = Auto Power Off）。
+     * <p>
+     * 相机固件默认在无操作若干分钟后自动关机；长间隔拍摄时我们可能几分钟才拍一张，
+     * 如果不告诉固件“别关机”，相机会在半路自动断电、任务中断。
+     * <p>
+     * 接口是索尼运行时的系统广播（不是 Android 标准 API）：
+     * 广播动作 {@code com.android.server.DAConnectionManagerService.apo}，
+     * 附加字符串 {@code apo_info}：
+     * <ul>
+     *   <li>{@code "APO/NO"} —— 禁止自动关机（拍摄进行中）</li>
+     *   <li>{@code "APO/NORMAL"} —— 恢复正常自动关机（停止拍摄 / 离开本界面）</li>
+     * </ul>
+     *
+     * @param enable true = 恢复正常自动关机；false = 禁止自动关机
+     */
+    private void setAutoPowerOffMode(boolean enable) {
+        boolean wantSuppressed = !enable;
+        if (apoSuppressed == wantSuppressed) {
+            return;     // 状态没变就不重复广播，减少对固件的打扰
+        }
+        try {
+            Intent intent = new Intent("com.android.server.DAConnectionManagerService.apo");
+            intent.putExtra("apo_info", enable ? "APO/NORMAL" : "APO/NO");
+            sendBroadcast(intent);
+            apoSuppressed = wantSuppressed;
+            AppLog.info("APO 自动关机：" + (enable ? "恢复正常" : "已禁止"));
+        } catch (Throwable t) {
+            AppLog.warn("发送 APO 广播失败：" + t.getMessage());
+        }
+    }
+
 
     /* ============================ 采集回调（固件线程） ============================ */
 
@@ -431,6 +492,7 @@ public class CaptureActivity extends Activity {
         scheduler.start();
         acquireWakeLock();
 
+
         // 相机硬件限制提示：间隔太短时立刻提醒
         String hw = settings.getHardwareWarning();
         if (hw != null) {
@@ -550,6 +612,11 @@ public class CaptureActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         int action = CameraKeyRouter.routeKeyDown(event);
+        // 诊断：把最近收到的按键（扫描码 + 解析结果）记下来显示在屏幕右下角。
+        // 相机上没有电脑、看不到 logcat，这是确认“按键到底有没有送到应用”的唯一办法。
+        lastScanCode = (event == null ? -1 : event.getScanCode());
+        lastKeyCode = keyCode;
+        lastActionName = CameraKeyRouter.actionName(action);
         if (action == CameraKeyRouter.ACTION_NONE) {
             return super.onKeyDown(keyCode, event);
         }
@@ -872,6 +939,16 @@ public class CaptureActivity extends Activity {
                 canvas.drawColor(Color.BLACK);
                 Paint p = UiTheme.newPaint(Color.WHITE, 18f, false);
                 canvas.drawText("界面绘制异常：" + t.getClass().getSimpleName(), 20, 40, p);
+            }
+            // 右下角诊断角标：最近一次按键的扫描码 / 解析出的动作 / 相机是否就绪。
+            // 真机上没有 logcat，这一行是排查“按键没反应”“初始化失败”的主要依据；
+            // 发布前可把 DEBUG_OVERLAY 改为 false 关闭。
+            if (DEBUG_OVERLAY) {
+                Paint dbg = UiTheme.newPaint(UiTheme.COLOR_TEXT_DIM, 12f, false);
+                String dbgText = "scan=" + lastScanCode + " key=" + lastKeyCode
+                        + " act=" + (lastActionName == null ? "-" : lastActionName)
+                        + " cam=" + (cameraOk ? "OK" : "FAIL");
+                canvas.drawText(dbgText, 8, UiTheme.SCREEN_H - 4, dbg);
             }
             if (w != UiTheme.SCREEN_W || h != UiTheme.SCREEN_H) {
                 canvas.restore();

@@ -91,6 +91,41 @@ public final class UiTheme {
     }
 
     /** 文本宽度 */
+    /**
+     * 把一段较长文字按最大宽度折行绘制（最多 maxLines 行，放不下时末尾用省略号）。
+     * 相机屏幕只有 640×480，错误信息（异常类名 + message）往往超过一行，
+     * 必须折行才能完整看到关键内容。
+     *
+     * @return 实际绘制的行数
+     */
+    public static int drawTextWrapped(Canvas c, Paint p, String text, float x, float y,
+                                      float maxWidth, int maxLines, float lineHeight) {
+        if (text == null || text.length() == 0) {
+            return 0;
+        }
+        int line = 0;
+        int start = 0;
+        while (start < text.length() && line < maxLines) {
+            // 逐字符试探本行最多能放多少个字
+            int end = start;
+            while (end < text.length() && p.measureText(text, start, end + 1) <= maxWidth) {
+                end++;
+            }
+            if (end == start) {
+                end = start + 1;        // 至少画一个字符，避免死循环
+            }
+            boolean lastLine = (end >= text.length()) || (line == maxLines - 1);
+            String part = text.substring(start, end);
+            if (lastLine && end < text.length()) {
+                part = part + "…";      // 还有内容但行数用完了
+            }
+            c.drawText(part, x, y + line * lineHeight, p);
+            line++;
+            start = end;
+        }
+        return line;
+    }
+
     public static float measure(Paint p, String text) {
         return p.measureText(text);
     }
