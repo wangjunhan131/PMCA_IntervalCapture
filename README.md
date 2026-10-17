@@ -4,6 +4,10 @@
 > 直接在相机本体上定时拍摄静态原图到 SD 卡，**只出照片，默认不合成延时视频**。  
 > 不需要电脑、不需要手机、不需要连接任何外设。
 
+
+**仓库地址：** <https://github.com/wangjunhan131/PMCA_IntervalCapture>  
+**APK 下载：** <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases>  
+**从源码编译：** 见 [docs/01-编译环境搭建.md](docs/01-编译环境搭建.md)  ·  **刷入相机：** 见 [docs/02-打包与PMCA-RE刷入教程.md](docs/02-打包与PMCA-RE刷入教程.md)
 ---
 
 ## 1. 这个项目是什么 / 不是什么
