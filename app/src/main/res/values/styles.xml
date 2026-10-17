@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PMCA_IntervalCapture 机内间隔拍照应用 —— 主题
+
+  相机运行时没有完整的 Material 主题体系，这里使用最朴素的 Holo 之前的主题，
+  并去掉标题栏（应用自己用 Canvas 画标题），避免占用 640x480 的宝贵空间。
+-->
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        <!-- 屏幕背景由应用自行绘制，这里保持黑色避免闪白 -->
+        <item name="android:windowBackground">@android:color/black</item>
+        <!-- 相机屏幕无触屏，关闭窗口进入/退出动画以减少卡顿 -->
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

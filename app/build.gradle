@@ -1,0 +1,65 @@
+/*
+ * PMCA_IntervalCapture 机内间隔拍照应用 —— app 模块构建脚本
+ *
+ * 关键点（PMCA 平台硬性约束）：
+ *   1. 相机运行时是 Android 2.3.7（API Level 10），因此 compileSdkVersion = 10、minSdkVersion = 10；
+ *   2. 索尼私有 API（com.sony.scalar.*）只存在于相机固件中，不能在运行时打进 APK，
+ *      所以必须用 provided / compileOnly 方式引入（只参与编译，不参与打包）；
+ *   3. 目标 JAVA 版本为 1.7（API 10 时代的 DEX 格式最稳妥），不使用 lambda、Stream 等新语法；
+ *   4. 不申请任何视频录制相关能力，本应用只调用静态照片捕获接口。
+ */
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 10
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        // 包名固定，PMCA-RE 刷入后以该包名出现在相机的“应用程序”列表中
+        applicationId "com.pmca.intervalcapture"
+        minSdkVersion 10
+        targetSdkVersion 10
+        versionCode 1
+        versionName "1.0.0"
+        // 相机屏幕为 640x480，不支持多语言资源目录以外的限定符，这里只保留默认配置
+    }
+
+    compileOptions {
+        // 必须使用 1.7 及以下语法，Android 2.3 的 ART/Dalvik 与索尼运行时对高版本字节码支持有限
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    // 关闭 lint 的致命错误中断，避免旧 SDK 的检查项阻断打包
+    lintOptions {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
+    // 不使用任何原生库与渲染脚本，减小编排出错面
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+dependencies {
+    /*
+     * 编译期依赖（只参与编译，不会打进 APK）：
+     *
+     *   libs/sony-pmca-stubs.jar
+     *     Sony PMCA 私有 API 的编译期桩（com.sony.scalar.hardware.CameraEx、
+     *     com.sony.scalar.sysutil.* 等）。这些类的真正实现在相机固件里，
+     *     所以只能用 compileOnly / provided 引入，绝不能打包进 APK，
+     *     否则会和相机固件里的同名类冲突，导致应用一启动就崩溃。
+     *
+     *   libs/android-4.1.1.4.jar
+     *     Android 4.1.1（API 16）的 AOSP 类库存根，仅作为编译期对照；
+     *     相机实际运行时是 Android 2.3.7（API 10），因此代码里只能调用
+     *     API 10 就已存在的 android.* 接口（本工程已严格检查过）。
+     *
+     * 若使用索尼官方 Camera Apps SDK，把官方 jar 放进 app/libs 即可，
+     * 下面的 fileTree 会自动把它一起纳入编译。
+     */
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PMCA_IntervalCapture 机内间隔拍照应用 —— 应用清单
+
+  平台事实（务必理解，否则会误以为是普通 Android APK）：
+    1. 相机运行时是 Android 2.3.7（API Level 10），没有触屏、没有普通意义上的 Home 桌面；
+    2. 相机固件通过 com.android.server.DAConnectionManagerService.AppInfoReceive 广播
+       得知“当前哪个 Activity 在前台”，因此本应用启动时会发送该广播（见 BaseActivity 逻辑）；
+    3. 应用退出后由固件重新启动原生拍照界面，相当于“返回相机原生 UI”；
+    4. 只申请静态照片拍摄与 SD 卡写入相关权限，不申请任何音视频/联网权限。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.pmca.intervalcapture"
+    android:versionCode="1"
+    android:versionName="1.0.0">
+
+    <!-- 允许打开相机硬件（静态照片捕获必需） -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- 允许写入相机 SD 卡（日志文件、参数配置写入） -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- 允许在长时间拍摄期间保持 CPU 唤醒，避免息屏导致间隔计时漂移 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 声明使用相机硬件；required=false 便于在部分固件上仍能启动并给出中文提示 -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/ic_launcher"
+        android:allowBackup="false"
+        android:theme="@style/AppTheme">
+
+        <!--
+          唯一的 Activity：参数设置页、运行状态页、完成/错误弹窗都在这一个 Activity 内切换，
+          这样相机固件始终认为前台只有一个界面，减少切换时的画面闪烁与预览中断。
+        -->
+        <activity
+            android:name=".CaptureActivity"
+            android:label="@string/app_title"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden"
+            android:launchMode="singleInstance"
+            android:windowSoftInputMode="stateAlwaysHidden">
+
+            <!-- 作为应用入口，出现在相机“应用程序”列表中 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          接收相机固件在“应用启动完成 / 应用退出完成”时发出的广播。
+          固件用这两个广播维护应用生命周期，某些机型若缺少接收器会出现
+          “退出后黑屏”或“再次进入应用卡住”的问题。
+        -->
+        <receiver android:name=".SystemEventReceiver">
+            <intent-filter>
+                <action android:name="com.android.server.DAConnectionManagerService.BootCompleted" />
+                <action android:name="com.android.server.DAConnectionManagerService.ExitCompleted" />
+                <category android:name="ANDROID.INTENT.CATEGORY.DEFAULT" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

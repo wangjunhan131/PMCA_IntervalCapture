@@ -1,0 +1,60 @@
+# ============================================================================
+#  PMCA_IntervalCapture .gitignore
+#  原则：仓库只放“源码 + 文档 + 文本形式的工具脚本 + 小型签名桩”，
+#        二进制大件（android.jar / build-tools / 构建产物 / 私钥）不进仓库。
+# ============================================================================
+
+# ---------- 构建产物 ----------
+/build/
+/out/
+*.apk
+*.spk
+*.dex
+*.class
+*.o
+*.so
+
+# ---------- 本地工具链二进制（体积大、可按 docs/01 重新获取） ----------
+/build-support/android-tools/
+/build-support/libs/*.jar
+/build-support/libs/**/*.class
+/build-support/*.keystore
+/.work/
+
+# ---------- 大体积第三方类库：不放仓库，按 docs/01 第 3.1 节自备 ----------
+#  android.jar 属于 Android SDK 组件，仓库不重新分发；
+#  克隆后请把自备的 android.jar 放到 app/libs/android-4.1.1.4.jar
+/app/libs/android-4.1.1.4.jar
+/app/libs/*.aar
+
+# ---------- 密钥与签名（自己生成，别上传） ----------
+*.keystore
+*.jks
+*.p12
+*.pem
+*.pfx
+keystore.properties
+signing.properties
+
+# ---------- 日志/临时文件 ----------
+*.log
+*.tmp
+*.bak
+*.orig
+*.rej
+build-log.txt
+test-log.txt
+verify.txt
+dexdump-f.txt
+
+# ---------- IDE / 系统 ----------
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.gradle/
+Thumbs.db
+desktop.ini
+.DS_Store

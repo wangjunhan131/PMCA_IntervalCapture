@@ -1,0 +1,28 @@
+# 统一换行符与二进制标记，避免 Windows/Linux 协作时把 .ps1 改成 LF 导致
+# Windows PowerShell 5.1 解析异常（本项目的 .ps1 必须保留 CRLF + UTF-8 BOM）。
+* text=auto
+
+# Java / Gradle / Markdown：LF 即可
+*.java    text eol=lf
+*.gradle  text eol=lf
+*.properties text eol=lf
+*.md      text eol=lf
+*.xml     text eol=lf
+*.json    text eol=lf
+*.j       text eol=lf
+*.js      text eol=lf
+
+# Windows 脚本：必须 CRLF
+*.ps1     text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+# 二进制：不做换行转换、不做 diff
+*.png     binary
+*.jpg     binary
+*.jar     binary
+*.apk     binary
+*.spk     binary
+*.dex     binary
+*.keystore binary
+*.class   binary

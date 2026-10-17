@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PMCA_IntervalCapture 机内间隔拍照应用 —— 资源字符串
+
+  注意：
+   1. 本应用运行在 A6000 相机内部，屏幕固定 640x480、无触屏，所有界面文字都用
+      Canvas 直接绘制，这里只保留少量被系统引用（如应用列表中的名称）的字符串；
+   2. 相机固件的默认语言可能是日文或英文，Android 找不到对应语言资源时会回退到
+      values/（即本文件的中文），保证屏幕上一定出现中文提示。
+-->
+<resources>
+    <!-- 应用在相机“应用程序”列表中显示的名称 -->
+    <string name="app_name">间隔拍照</string>
+    <!-- 界面标题（供系统任务列表使用） -->
+    <string name="app_title">PMCA 机内间隔拍照</string>
+</resources>

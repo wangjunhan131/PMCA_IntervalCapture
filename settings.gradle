@@ -1,0 +1,6 @@
+/*
+ * PMCA_IntervalCapture 机内间隔拍照应用 —— Gradle 多模块设置
+ * 目前只有一个 app 模块。
+ */
+rootProject.name = 'PMCA_IntervalCapture'
+include ':app'
