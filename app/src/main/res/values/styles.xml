@@ -9,7 +9,7 @@
     <style name="AppTheme" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen">
         <!-- 屏幕背景由应用自行绘制，这里保持黑色避免闪白 -->
         <item name="android:windowBackground">@android:color/black</item>
-        <!-- 相机屏幕无触屏，关闭窗口进入/退出动画以减少卡顿 -->
+        <!-- 本应用只用实体按键，关闭窗口进入/退出动画以减少卡顿 -->
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 </resources>

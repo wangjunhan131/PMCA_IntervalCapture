@@ -7,7 +7,7 @@
 #  可选参数：
 #     -User   你的 GitHub 用户名（必填；用来拼 remote 地址）
 #     -Repo   仓库名，默认 PMCA_IntervalCapture
-#     -Tag    同时创建的版本标签，默认 v1.0.0；传 "" 表示不建标签
+#     -Tag    同时创建的版本标签，默认 v1.0.1；传 "" 表示不建标签
 #     -Token  改用 HTTPS + Personal Access Token 推送（不传则用 SSH）
 #     -Check  只检查环境与 SSH 认证状态，不真正 push
 #
@@ -21,7 +21,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$User,
     [string]$Repo = 'PMCA_IntervalCapture',
-    [string]$Tag  = 'v1.0.0',
+    [string]$Tag  = 'v1.0.1',
     [string]$Token = '',
     [switch]$Check
 )

@@ -169,7 +169,7 @@ public final class SettingsScreen {
             canvas.drawText("⚠ " + warning, 16, warnY + 14, warnPaint);
         } else {
             warnPaint.setColor(UiTheme.COLOR_OK);
-            canvas.drawText("✔ 当前设置符合 A6000 的稳定拍摄能力", 16, warnY + 14, warnPaint);
+            canvas.drawText("✔ 当前设置符合 A6500 的稳定拍摄能力", 16, warnY + 14, warnPaint);
             warnPaint.setColor(UiTheme.COLOR_WARN);
         }
         if (statusLine != null) {

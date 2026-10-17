@@ -40,7 +40,7 @@ public final class HealthMonitor {
 
     /** 阈值：剩余空间警告 100MB */
     private static final long WARN_FREE_BYTES = 100L * 1024 * 1024;
-    /** 阈值：剩余空间低于 30MB 必须停止（一张 A6000 RAW 约 24MB） */
+    /** 阈值：剩余空间低于 30MB 必须停止（一张 A6500 RAW 约 24MB） */
     private static final long STOP_FREE_BYTES = 30L * 1024 * 1024;
     /** 连续写卡失败上限 */
     private static final int MAX_CONSECUTIVE_FAILURES = 3;

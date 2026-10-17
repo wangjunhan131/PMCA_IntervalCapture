@@ -7,7 +7,9 @@ import com.sony.scalar.sysutil.ScalarInput;
 /**
  * CameraKeyRouter —— 相机实体按键路由
  * <p>
- * A6000 没有触屏，所有交互都靠机身按键。相机运行时把按键事件以 {@link KeyEvent} 形式
+ * A6500 机身虽有触摸屏，但本应用**不做任何触摸交互**，全部操作都靠机身实体按键；
+ * 这样在不同 PMCA 机型（A6000 系无触屏 / A6500 有触屏）上行为完全一致，也避免误触。
+ * 相机运行时把按键事件以 {@link KeyEvent} 形式
  * 投递到 Activity，但普通的 keyCode 在相机上不可靠（同一物理键在不同机型上 keyCode 可能
  * 不同），真正稳定的是“扫描码” {@link KeyEvent#getScanCode()}。
  * 扫描码的取值定义在索尼私有类 {@code com.sony.scalar.sysutil.ScalarInput} 中，

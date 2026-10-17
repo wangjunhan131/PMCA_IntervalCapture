@@ -1,9 +1,9 @@
-# 02 · 打包与 PMCA-RE 刷入 A6000 完整教程
+# 02 · 打包与 PMCA-RE 刷入 A6500 完整教程
 
 本文分三部分：
 
 1. **打包**：把源码变成可安装的 `PMCA_IntervalCapture.apk`（含签名校验）；
-2. **刷入**：用 PMCA-RE 通过 USB 把 APK 装进 A6000 相机；
+2. **刷入**：用 PMCA-RE 通过 USB 把 APK 装进 A6500 相机；
 3. **验证与排障**：装完怎么确认成功、出问题怎么退回。
 
 > 强烈建议先读 [03-风险提示.md](03-风险提示.md)。刷写行为有风险，请自行承担后果。
@@ -121,13 +121,13 @@ $zip.Dispose()
 
 ---
 
-## 第二部分 · 用 PMCA-RE 刷入 A6000
+## 第二部分 · 用 PMCA-RE 刷入 A6500
 
 ### 2.1 需要准备什么
 
 | 项目 | 要求 |
 | --- | --- |
-| 相机 | ILCE-6000（A6000），支持 PlayMemories Camera Apps |
+| 相机 | ILCE-6500（A6500），支持 PlayMemories Camera Apps |
 | 电量 | **≥ 80%**，刷入全程不要关机、不要拔线 |
 | USB 线 | 能传数据的 micro-USB 线（只能充电的线不行，这是最常见的失败原因） |
 | 电脑 | Windows 10/11（PMCA-RE 使用系统自带的 MTP/大容量存储驱动，通常无需装驱动） |
@@ -146,7 +146,7 @@ $zip.Dispose()
 ### 2.3 方式一：图形界面 pmca-gui（最简单）
 
 1. 双击 `pmca-gui.exe`（免安装，解压即用）；
-2. 程序顶部应显示相机型号（如 `ILCE-6000`）与固件版本 —— 看不到就回到 2.2 检查 MTP 与线材；
+2. 程序顶部应显示相机型号（如 `ILCE-6500`）与固件版本 —— 看不到就回到 2.2 检查 MTP 与线材；
 3. 切到 **Install app**（安装应用）标签页；
 4. 选择 **Install app from file**（从文件安装），点选 `build\outputs\PMCA_IntervalCapture.apk`；
 5. 点 **Install selected app**；
@@ -176,7 +176,7 @@ pmca-console install -f build\outputs\PMCA_IntervalCapture.apk -o install-result
 ```
 Analyzing apk
 Package: com.pmca.intervalcapture
-Version: 1.0.0
+Version: 1.0.1
 Starting task
 Starting communication
 ...
@@ -239,7 +239,7 @@ SPK 的优点是可以作为单个文件离线分发/备份；缺点是仍要经
 ### 2.8 卸载 / 回滚 / 重装
 
 1. **相机内卸载**：`MENU` → **应用程序** → **应用程序列表 / 应用程序管理**，选中“间隔拍照”，
-   按提示删除（不同固件菜单名略有差异，A6000 上通常在应用程序列表内长按或按选项键）。
+   按提示删除（不同固件菜单名略有差异，A6500 上通常在应用程序列表内长按或按选项键）。
 2. **覆盖安装**：签名一致时可直接重装新版本（versionCode 变大即可）；签名不一致会报
    `INSTALL_FAILED_UPDATE_INCOMPATIBLE`，此时必须先卸载。
 3. **保留数据**：卸载会清除应用在相机内的私有数据（`/data/data/com.pmca.intervalcapture`），

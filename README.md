@@ -1,6 +1,6 @@
 # PMCA_IntervalCapture —— 索尼相机机内间隔拍照工具
 
-> 一个运行在 **索尼 ILCE-6000（A6000）相机内部** 的 PlayMemories Camera Apps（PMCA）应用。  
+> 一个运行在 **索尼 ILCE-6500（A6500）相机内部** 的 PlayMemories Camera Apps（PMCA）应用。  
 > 直接在相机本体上定时拍摄静态原图到 SD 卡，**只出照片，默认不合成延时视频**。  
 > 不需要电脑、不需要手机、不需要连接任何外设。
 
@@ -31,7 +31,7 @@
 
 | 参数   | 范围 / 选项                      | 说明                                    |
 | ---- | ---------------------------- | ------------------------------------- |
-| 拍摄间隔 | 1.0 ~ 3600 秒，最小步进 0.1 秒      | 内部以 0.1 秒为整数单位存储，1.0 秒是 A6000 的稳定下限   |
+| 拍摄间隔 | 1.0 ~ 3600 秒，最小步进 0.1 秒      | 内部以 0.1 秒为整数单位存储，1.0 秒是 A6500 的稳定下限   |
 | 拍摄张数 | 固定模式 1 ~ 9999 张 / 无限模式（手动停止） | 两种模式可切换                               |
 | 图像格式 | 仅 JPG / 仅 RAW（ARW）/ JPG+RAW  | 单选，实际写卡格式由相机“影像质量”设置决定                |
 | 曝光锁定 | 开 / 关                        | 开启后首张锁定 AE/AF（白平衡随相机设置），后续复用，防止画面明暗闪烁 |
@@ -46,7 +46,7 @@
 - 机身温度状态、SD 卡剩余空间
 - 状态文字：待机 / 拍摄中 / 已暂停 / 已结束 / 出错
 
-### 2.3 按键映射（相机没有触屏）
+### 2.3 按键映射（全部用实体按键，不用触摸）
 
 **参数页**
 
@@ -183,9 +183,9 @@ powershell -ExecutionPolicy Bypass -File tools\run-logic-tests.ps1
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
 | 相机运行时 = Android 2.3.7（API 10） | `minSdkVersion 10`；只用 API 10 存在的 `android.*` 接口；`StatFs` 只用 `getBlockSize()` / `getAvailableBlocks()` |
 | 索尼私有 API 只在固件里                | 所有 `com.sony.scalar.*` 用 `compileOnly` 引入，**绝不打包**，否则启动即 `ClassCastException`/崩溃                      |
-| A6000 最短稳定间隔 1 秒              | 间隔下限硬钳制 1.0 秒；<1.5 秒且开预览或用 RAW 时界面弹硬件告警                                                               |
+| A6500 最短稳定间隔 1 秒              | 间隔下限硬钳制 1.0 秒；<1.5 秒且开预览或用 RAW 时界面弹硬件告警                                                               |
 | 长曝光会占用拍摄周期                    | 调度器记录每张实际耗时，`lastShotDuration >= interval` 时判定“节拍溢出”：下一次立即拍，并累加溢出计数在运行页显示                             |
-| 无触屏，640×480 横屏                | 全部界面用 `Canvas` 自绘，无任何 `Button`/`EditText`/触摸监听；预览区固定 296×300                                          |
+| 仅实体按键，640×480 横屏            | 全部界面用 `Canvas` 自绘，无任何 `Button`/`EditText`/触摸监听；预览区固定 296×300                                          |
 | 只拍静态图                         | 全工程只调用 `CameraEx.takePicture()`，没有任何 `MediaRecorder` / 视频 API                                         |
 | 相机必须保持唤醒                      | 拍摄期间持有 `PARTIAL_WAKE_LOCK`，结束与退出时释放                                                                   |
 
@@ -209,7 +209,7 @@ powershell -ExecutionPolicy Bypass -File tools\run-logic-tests.ps1
 ## 7. 免责声明
 
 本项目为学习与个人创作用途的开源工程，与索尼公司无关，未获得索尼官方授权或背书。  
-“PlayMemories Camera Apps”“ILCE-6000”“索尼”是其各自权利人的商标。  
+“PlayMemories Camera Apps”“ILCE-6500”“索尼”是其各自权利人的商标。  
 刷机、改机属于超出厂商保修范围的操作，请自行评估并承担全部风险与后果。
 
 ---
@@ -241,6 +241,6 @@ powershell -ExecutionPolicy Bypass -File tools\run-logic-tests.ps1
 powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的GitHub用户名
 ```
 
-> 脚本会自动配置 `origin`、校验 SSH、推送 `main` 和 `v1.0.0` 标签。
+> 脚本会自动配置 `origin`、校验 SSH、推送 `main` 和 `v1.0.1` 标签。
 > 加 `-Check` 只做检查不推送；加 `-Token ghp_xxx` 可改用 HTTPS + PAT。
 

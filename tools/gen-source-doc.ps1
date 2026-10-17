@@ -111,7 +111,7 @@ Add-Line '| 编译 | javac 通过；d8 产物 classes.dex 共 **37 个 class_def
 Add-Line '| DEX | d8 `--min-api 10` 通过，单 `classes.dex`，62,620 字节 |'
 Add-Line '| 签名 | apksigner v1（JAR）verified = true，v2/v3.1/v4 全部关闭 |'
 Add-Line '| 包大小 | `PMCA_IntervalCapture.apk` 约 35.1 KB（仅 V1 签名） |'
-Add-Line '| 包名/版本 | `com.pmca.intervalcapture` / versionCode 1 / versionName 1.0.0 |'
+Add-Line '| 包名/版本 | `com.pmca.intervalcapture` / versionCode 2 / versionName 1.0.1 |'
 Add-Line '| 应用名 | 间隔拍照（application-label） |'
 Add-Line '| 逻辑单测 | 64 项断言全部通过 |'
 Add-Line '| 私有类泄漏 | `dexdump -f` 全量扫描：37 个类定义**全部**是 `com/pmca/intervalcapture/*`；`com/sony/scalar/*` 只以类型引用出现，**零类定义** |'

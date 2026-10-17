@@ -9,27 +9,27 @@
 
 ---
 
-## 0. 当前状态（2026-10-17：已上传成功，只剩“上传 APK 到 Releases”）
+## 0. 当前状态（2026-10-17：v1.0.1 已推送，只剩“上传 APK 到 Releases”）
 
 | 项目 | 状态 |
 | --- | --- |
 | Git | ✅ 便携版 MinGit：`D:\sony\build-support\mingit\cmd\git.exe`（`git version 2.56.0.windows.2`） |
 | GitHub 账号 | ✅ `wangjunhan131`（SSH 公钥已添加，`ssh -T git@github.com` 认证通过） |
 | 远程仓库 | ✅ **公开仓库** <https://github.com/wangjunhan131/PMCA_IntervalCapture> |
-| main 分支 | ✅ 已推送，入库 **42 个文件**，最新提交 `docs: 补充仓库地址与 v1.0.0 发行说明` |
-| 标签 | ✅ `v1.0.0` 已推送（附注标签） |
+| main 分支 | ✅ 已推送，最新提交为 `release: v1.0.1（A6500 适配 + uses-sdk 修复）` |
+| 标签 | ✅ `v1.0.0`、`v1.0.1` 均已推送（附注标签） |
 | 上传前检查 | ✅ 无 `android-4.1.1.4.jar`、无 keystore、无 `build/`、无 `*.apk` |
 | 换行符/编码 | ✅ `.gitattributes` 固定：`.ps1` 走 CRLF，Java/MD 走 LF，二进制不转换 |
-| 离线备份 | ✅ `build\release\PMCA_IntervalCapture-src-v1.0.0.zip`（308 KB）与 `…-v1.0.0.bundle`（300 KB） |
+| 离线备份 | ✅ `build\release\PMCA_IntervalCapture-src-v1.0.0.zip` 等历史备份 |
 | **还剩什么** | ⏳ **把 APK 传到 Releases**（网页拖拽，约 30 秒，见 0.1） |
 
 ### 0.1 最后一步：把 APK 传到 Releases（约 30 秒）
 
-1. 浏览器打开 <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases/new?tag=v1.0.0>
-   （标题与正文已按 `docs/07-发行说明-v1.0.0.md` 预填，可直接用）
+1. 浏览器打开 <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases/new?tag=v1.0.1>
+   （标题与正文已按 `docs/07-发行说明-v1.0.1.md` 预填，可直接用）
 2. 页面中部找到 **Attach binaries by dropping them here** 虚线区，
    把本机 `D:\sony\PMCA_IntervalCapture\build\outputs\PMCA_IntervalCapture.apk`
-   （桌面上的 `PMCA_IntervalCapture-v1.0.0.apk` 是同一份）**拖进去**
+   （桌面上的 `PMCA_IntervalCapture-v1.0.1.apk` 是同一份）**拖进去**
 3. 等上传完成（列表里出现 `PMCA_IntervalCapture.apk` 一行），点最下面绿色 **Publish release**
 4. 验证：打开 <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases>，能在 `Assets` 里看到 APK 即可
 
@@ -39,8 +39,8 @@
 
 仓库首页右侧 **About** 旁点齿轮：
 
-- **Description**：`索尼 A6000 机内间隔拍照 PMCA 应用（只出照片，默认不合成视频）`
-- **Topics**：`sony` `camera` `timelapse` `intervalometer` `pmca` `a6000` `android`
+- **Description**：`索尼 A6500 机内间隔拍照 PMCA 应用（只出照片，默认不合成视频）`
+- **Topics**：`sony` `camera` `timelapse` `intervalometer` `pmca` `a6500` `android`
 
 ### 0.3 换电脑 / 让别人 clone 后怎么编译
 
@@ -140,7 +140,7 @@ git count-objects -vH
 首次提交：
 
 ```powershell
-git commit -m "feat: PMCA 机内间隔拍照应用 v1.0.0（A6000 实体按键 / 只出照片）"
+git commit -m "feat: PMCA 机内间隔拍照应用 v1.0.0（A6500 实体按键 / 只出照片）"
 ```
 
 > 提交信息建议遵守 Conventional Commits：`feat:` 新功能、`fix:` 修 bug、`docs:` 文档、`chore:` 杂项。
@@ -156,7 +156,7 @@ git commit -m "feat: PMCA 机内间隔拍照应用 v1.0.0（A6000 实体按键 /
 | 字段 | 建议值 |
 | --- | --- |
 | Repository name | `PMCA_IntervalCapture`（与工程名一致） |
-| Description | `索尼 A6000 机内间隔拍照工具 · PMCA 原生应用 · 只出照片不合成视频` |
+| Description | `索尼 A6500 机内间隔拍照工具 · PMCA 原生应用 · 只出照片不合成视频` |
 | 可见性 | **Public**（想私藏就选 Private，流程完全一样） |
 | Add a README file | ❌ **不要勾**（本地已有 README.md） |
 | Add .gitignore | ❌ **不要选**（本地已提供） |
@@ -264,8 +264,8 @@ git push origin --tags
 
 | 位置 | 建议填写内容 |
 | --- | --- |
-| About → Description | `索尼 A6000 机内间隔拍照工具 · PMCA 原生应用 · 只出照片不合成视频` |
-| About → Topics | `sony` `pmca` `a6000` `ilce-6000` `intervalometer` `timelapse` `playmemories` `camera-app` `java` `reverse-engineering` |
+| About → Description | `索尼 A6500 机内间隔拍照工具 · PMCA 原生应用 · 只出照片不合成视频` |
+| About → Topics | `sony` `pmca` `a6500` `ilce-6500` `intervalometer` `timelapse` `playmemories` `camera-app` `java` `reverse-engineering` |
 | About → License | 自动识别为 `MIT license`（有 LICENSE 文件即可） |
 | Settings → General → Default branch | `main` |
 | Settings → Features → Issues / Discussions | 建议开启 Issues（收集刷机问题），Discussions 可选 |

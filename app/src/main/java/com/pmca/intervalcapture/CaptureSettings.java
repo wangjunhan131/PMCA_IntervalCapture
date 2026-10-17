@@ -17,12 +17,12 @@ public final class CaptureSettings {
 
     /* ============================ 硬性范围常量 ============================ */
 
-    /** 拍摄间隔下限：0.1 秒为最小步进（A6000 理论最短稳定间隔为 1 秒，低于 1 秒会给出警告） */
+    /** 拍摄间隔下限：0.1 秒为最小步进（A6500 理论最短稳定间隔为 1 秒，低于 1 秒会给出警告） */
     public static final int INTERVAL_MIN_DS = 10;
 
     /**
      * 拍摄间隔强制下限：1.0 秒 = 10 个 0.1 秒。
-     * A6000 机身在连续静态拍摄时，单张的“快门+读出+写卡”至少占用约 0.6~0.9 秒，
+     * A6500 机身在连续静态拍摄时，单张的“快门+读出+写卡”至少占用约 0.6~0.9 秒，
      * 因此低于 1.0 秒的间隔在实际使用中不可能达成，此处作为“最低允许设置值”拦截。
      */
     public static final int INTERVAL_HARD_MIN_DS = 10;
@@ -258,7 +258,7 @@ public final class CaptureSettings {
     /**
      * 判断当前设置是否可能受相机硬件限制而无法严格维持间隔。
      * 触发条件（满足其一即提示）：
-     *   - 间隔 < 1.0 秒（A6000 理论上做不到）；
+     *   - 间隔 < 1.0 秒（A6500 理论上做不到）；
      *   - 间隔 < 1.5 秒且图像格式包含 RAW（RAW 单张写卡时间更长）；
      *   - 间隔 < 1.5 秒且同时开启预览（预览刷新与写卡争抢总线）。
      *
@@ -267,7 +267,7 @@ public final class CaptureSettings {
     public String getHardwareWarning() {
         float sec = getIntervalSeconds();
         if (sec < 1.0f) {
-            return "间隔小于 1 秒，A6000 无法稳定维持";
+            return "间隔小于 1 秒，A6500 无法稳定维持";
         }
         if (sec < 1.5f && imageFormat != FORMAT_JPG_ONLY) {
             return "RAW 写卡较慢，1.5 秒以内间隔可能漂移";

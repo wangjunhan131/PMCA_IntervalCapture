@@ -28,7 +28,7 @@ public final class IntervalScheduler {
     /**
      * 单张拍摄的保护超时（毫秒）。
      * 超过该时间仍未收到相机的“写卡完成”回调，判定为相机异常，主动取消本次拍摄。
-     * 之所以取 30 秒：A6000 挂 30 秒长曝光 + RAW 写卡也能在这个时间内完成；
+     * 之所以取 30 秒：A6500 挂 30 秒长曝光 + RAW 写卡也能在这个时间内完成；
      * 万一机身卡死，应用能及时报错而不是无限等待。
      */
     public static final long CAPTURE_TIMEOUT_MS = 30000L;

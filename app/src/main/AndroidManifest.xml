@@ -3,7 +3,7 @@
   PMCA_IntervalCapture 机内间隔拍照应用 —— 应用清单
 
   平台事实（务必理解，否则会误以为是普通 Android APK）：
-    1. 相机运行时是 Android 2.3.7（API Level 10），没有触屏、没有普通意义上的 Home 桌面；
+    1. 相机运行时是 Android 2.3.7（API Level 10），没有普通意义上的 Home 桌面；交互只用机身实体按键（本应用不注册任何触摸监听）；
     2. 相机固件通过 com.android.server.DAConnectionManagerService.AppInfoReceive 广播
        得知“当前哪个 Activity 在前台”，因此本应用启动时会发送该广播（见 BaseActivity 逻辑）；
     3. 应用退出后由固件重新启动原生拍照界面，相当于“返回相机原生 UI”；
@@ -11,8 +11,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pmca.intervalcapture"
-    android:versionCode="1"
-    android:versionName="1.0.0">
+    android:versionCode="2"
+    android:versionName="1.0.1">
 
     <!-- 允许打开相机硬件（静态照片捕获必需） -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -23,6 +23,15 @@
 
     <!-- 声明使用相机硬件；required=false 便于在部分固件上仍能启动并给出中文提示 -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!--
+      必须显式声明 uses-sdk：
+        1. 相机运行时是 Android 2.3.7（API Level 10），minSdkVersion 写 10 才与目标平台一致；
+        2. PMCA-RE 安装器（pmca/apk/__init__.py 的 getMinSdkVersion()）会读取这个元素，
+           缺失时它会抛异常并打印 "Warning: Invalid apk file"，部分固件的应用安装器
+           同样依赖该字段判断兼容性，缺失可能导致安装被拒。
+    -->
+    <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="10" />
 
     <application
         android:label="@string/app_name"
