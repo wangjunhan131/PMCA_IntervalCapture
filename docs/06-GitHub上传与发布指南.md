@@ -9,50 +9,50 @@
 
 ---
 
-## 0. 本机现状（2026-10-17 已就绪，只剩“授权”一步）
+## 0. 当前状态（2026-10-17：已上传成功，只剩“上传 APK 到 Releases”）
 
 | 项目 | 状态 |
 | --- | --- |
-| Git | ✅ 便携版 MinGit 已装在 `D:\sony\build-support\mingit\cmd\git.exe`（1 条命令即可用） |
-| 本地仓库 | ✅ `git init` 完成，主分支 `main`，首个提交 `0b11266`，入库 40 个文件 |
+| Git | ✅ 便携版 MinGit：`D:\sony\build-support\mingit\cmd\git.exe`（`git version 2.56.0.windows.2`） |
+| GitHub 账号 | ✅ `wangjunhan131`（SSH 公钥已添加，`ssh -T git@github.com` 认证通过） |
+| 远程仓库 | ✅ **公开仓库** <https://github.com/wangjunhan131/PMCA_IntervalCapture> |
+| main 分支 | ✅ 已推送，入库 **42 个文件**，最新提交 `docs: 补充仓库地址与 v1.0.0 发行说明` |
+| 标签 | ✅ `v1.0.0` 已推送（附注标签） |
 | 上传前检查 | ✅ 无 `android-4.1.1.4.jar`、无 keystore、无 `build/`、无 `*.apk` |
-| 换行符/编码 | ✅ `.gitattributes` 已固定：`.ps1` 走 CRLF，Java/MD 走 LF，二进制不转换 |
-| SSH 密钥 | ✅ 已生成 `C:\Users\Administrator\.ssh\id_ed25519`（ed25519，无口令） |
-| SSH 连通 | ✅ 22 端口通，主机指纹 `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`（与 GitHub 官方一致） |
-| GitHub 网络 | ✅ 走本机代理 `127.0.0.1:7892`，`git ls-remote` 1.3 秒 |
-| 一键推送脚本 | ✅ `tools\push-to-github.ps1`（自动找 git、自检、推送、打标签） |
+| 换行符/编码 | ✅ `.gitattributes` 固定：`.ps1` 走 CRLF，Java/MD 走 LF，二进制不转换 |
 | 离线备份 | ✅ `build\release\PMCA_IntervalCapture-src-v1.0.0.zip`（308 KB）与 `…-v1.0.0.bundle`（300 KB） |
-| **缺什么** | ⏳ **GitHub 账号授权**：公钥还没添加到你的 GitHub 账号（这一步必须由你本人操作，密码/token 不需要给任何人） |
+| **还剩什么** | ⏳ **把 APK 传到 Releases**（网页拖拽，约 30 秒，见 0.1） |
 
-### 0.1 你只需做这 1 步（约 30 秒）
+### 0.1 最后一步：把 APK 传到 Releases（约 30 秒）
 
-1. 浏览器打开 <https://github.com/settings/ssh/new>（没登录会先让你登录）
-2. **Title** 随便填：`PMCA-A6000`
-3. **Key type** 选 `Authentication Key`
-4. **Key** 里粘贴下面这一整行（就是本机公钥）：
+1. 浏览器打开 <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases/new?tag=v1.0.0>
+   （标题与正文已按 `docs/07-发行说明-v1.0.0.md` 预填，可直接用）
+2. 页面中部找到 **Attach binaries by dropping them here** 虚线区，
+   把本机 `D:\sony\PMCA_IntervalCapture\build\outputs\PMCA_IntervalCapture.apk`
+   （桌面上的 `PMCA_IntervalCapture-v1.0.0.apk` 是同一份）**拖进去**
+3. 等上传完成（列表里出现 `PMCA_IntervalCapture.apk` 一行），点最下面绿色 **Publish release**
+4. 验证：打开 <https://github.com/wangjunhan131/PMCA_IntervalCapture/releases>，能在 `Assets` 里看到 APK 即可
 
-```text
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHypXsHyau7v/fiwVcoyxg6kxdMquF8U47oLKvnaDRUu pmca-intervalcapture@WIN-20250119OCK
-```
+> 以后发新版：`git tag -a v1.0.1 -m "说明"` → `git push origin --tags` → Releases 页面点 Draft a new release。
 
-5. 点 **Add SSH key**，回到本工程根目录执行（把 `你的用户名` 换成 GitHub 用户名）：
+### 0.2 可选：仓库美化（1 分钟）
+
+仓库首页右侧 **About** 旁点齿轮：
+
+- **Description**：`索尼 A6000 机内间隔拍照 PMCA 应用（只出照片，默认不合成视频）`
+- **Topics**：`sony` `camera` `timelapse` `intervalometer` `pmca` `a6000` `android`
+
+### 0.3 换电脑 / 让别人 clone 后怎么编译
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的用户名
+# 克隆（新机器也要先把公钥加到自己的 GitHub 账号，或用 HTTPS + token）
+git clone git@github.com:wangjunhan131/PMCA_IntervalCapture.git
+cd PMCA_IntervalCapture
+
+# 补回不入库的编译依赖（见 .gitignore 与 README 第 8 节）
+copy D:\sony\PMCA_IntervalCapture\app\libs\android-4.1.1.4.jar app\libs\
+# 然后按 docs\01-编译环境搭建.md 构建
 ```
-
-脚本会自动：加 `origin` → 校验 SSH → `git push -u origin main` → 打 `v1.0.0` 标签并推送。
-如果脚本提示“SSH 认证未通过”，说明第 5 步还没生效，等 10 秒重跑即可。
-
-> 想先看看会推什么、不真正推送：加 `-Check` 参数。
-> 不想用 SSH（比如 22 端口被封）也可以改用 HTTPS + Token：
-> `powershell -ExecutionPolicy Bypass -File tools\push-to-github.ps1 -User 你的用户名 -Token ghp_xxxxx`
-
-### 0.2 还没有 GitHub 账号？
-
-先到 <https://github.com/signup> 注册（需邮箱验证），然后回到 0.1 做那 1 步。
-不想注册也能分享：`build\release\PMCA_IntervalCapture-src-v1.0.0.zip` 直接发给别人，
-对方解压后按 [docs/01-编译环境搭建.md](01-编译环境搭建.md) 就能自己构建。
 
 ---
 
