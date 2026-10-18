@@ -73,6 +73,14 @@ public final class SettingsScreen {
                 return "曝光锁定";
             case CaptureSettings.FIELD_PREVIEW:
                 return "实时预览";
+            case CaptureSettings.FIELD_EXPOSURE_MODE:
+                return "曝光模式";
+            case CaptureSettings.FIELD_APERTURE:
+                return "光圈调整";
+            case CaptureSettings.FIELD_SHUTTER:
+                return "快门调整";
+            case CaptureSettings.FIELD_ISO:
+                return "感光度 ISO";
             default:
                 return "";
         }
@@ -93,6 +101,14 @@ public final class SettingsScreen {
                 return s.isLockAeAf() ? "开" : "关";
             case CaptureSettings.FIELD_PREVIEW:
                 return s.formatPreview();
+            case CaptureSettings.FIELD_EXPOSURE_MODE:
+                return s.formatExposureMode();
+            case CaptureSettings.FIELD_APERTURE:
+                return s.formatAperture();
+            case CaptureSettings.FIELD_SHUTTER:
+                return s.formatShutter();
+            case CaptureSettings.FIELD_ISO:
+                return s.formatIso();
             default:
                 return "";
         }
@@ -102,7 +118,7 @@ public final class SettingsScreen {
     public static String fieldHint(CaptureSettings s, int index) {
         switch (index) {
             case CaptureSettings.FIELD_INTERVAL:
-                return "范围 1.0~3600 秒，步进 0.1 秒（低于 10 秒时每按一次 ±0.1）";
+                return "范围 0.1~3600 秒，步进 0.1 秒（低于 1 秒可能无法严格维持）";
             case CaptureSettings.FIELD_COUNT_MODE:
                 return "固定张数：拍完自动停止；无限：手动按停止";
             case CaptureSettings.FIELD_SHOT_COUNT:
@@ -113,6 +129,14 @@ public final class SettingsScreen {
                 return "开：首张锁定 AE/AF/WB，防止画面明暗闪烁";
             case CaptureSettings.FIELD_PREVIEW:
                 return "关：降低机身发热，提升长间隔稳定性";
+            case CaptureSettings.FIELD_EXPOSURE_MODE:
+                return "跟随机内=不改曝光；应用接管=下面三项生效";
+            case CaptureSettings.FIELD_APERTURE:
+                return "步进档位，需镜头支持、机内 A/M 档";
+            case CaptureSettings.FIELD_SHUTTER:
+                return "步进档位，需机内 S/M 档；长曝会占用间隔";
+            case CaptureSettings.FIELD_ISO:
+                return "仅 M 档可设；自动时由机内控制";
             default:
                 return "";
         }
@@ -136,7 +160,7 @@ public final class SettingsScreen {
         canvas.drawText("间隔拍照  |  参数设置", 16, 31, titlePaint);
         valuePaint.setTextSize(UiTheme.TEXT_HINT);
         valuePaint.setColor(UiTheme.COLOR_TEXT_DIM);
-        UiTheme.drawTextRight(canvas, valuePaint, "PMCA_IntervalCapture v1.0.2", UiTheme.SCREEN_W - 14, 29);
+        UiTheme.drawTextRight(canvas, valuePaint, "PMCA_IntervalCapture v1.1.0", UiTheme.SCREEN_W - 14, 29);
         valuePaint.setTextSize(UiTheme.TEXT_VALUE);
         valuePaint.setColor(UiTheme.COLOR_TEXT);
 
@@ -166,10 +190,11 @@ public final class SettingsScreen {
         UiTheme.drawHLine(canvas, linePaint, 8, UiTheme.SCREEN_W - 8, warnY - 6);
         String warning = settings.getHardwareWarning();
         if (warning != null) {
-            canvas.drawText("⚠ " + warning, 16, warnY + 14, warnPaint);
+            // 用 [!] 而不是 ⚠：固件字体表缺这个 Unicode 符号，会显示成空心方框
+            canvas.drawText("[!] " + warning, 16, warnY + 14, warnPaint);
         } else {
             warnPaint.setColor(UiTheme.COLOR_OK);
-            canvas.drawText("✔ 当前设置符合 A6500 的稳定拍摄能力", 16, warnY + 14, warnPaint);
+            canvas.drawText("[OK] 当前设置符合机型的稳定拍摄能力", 16, warnY + 14, warnPaint);
             warnPaint.setColor(UiTheme.COLOR_WARN);
         }
         if (statusLine != null) {

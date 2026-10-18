@@ -117,7 +117,7 @@ public final class UiTheme {
             boolean lastLine = (end >= text.length()) || (line == maxLines - 1);
             String part = text.substring(start, end);
             if (lastLine && end < text.length()) {
-                part = part + "…";      // 还有内容但行数用完了
+                part = part + "...";      // 还有内容但行数用完了（不用"…"，固件字体缺字形会画成方框）
             }
             c.drawText(part, x, y + line * lineHeight, p);
             line++;

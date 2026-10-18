@@ -68,6 +68,12 @@ public final class CaptureService {
 
     /** 索尼 CameraEx 实例（打开成功后非空） */
     private CameraEx cameraEx;
+
+    /** v1.1.0：把已打开的 CameraEx 暴露给曝光控制器（ParametersModifier 需要它） */
+    public CameraEx getCameraEx() {
+        return cameraEx;
+    }
+
     /** 普通静态拍摄通道 */
     private Camera normalCamera;
     /** 是否已经打开了相机 */

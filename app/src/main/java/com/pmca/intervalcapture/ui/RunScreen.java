@@ -173,15 +173,15 @@ public final class RunScreen {
         canvas.drawText("确认 暂停/继续    下 停止   菜单 退出", 16, UiTheme.SCREEN_H - 8, hintPaint);
     }
 
-    /** 文本过长时截断加省略号，避免超出屏幕 */
+    /** 文本过长时截断加省略号，避免超出屏幕（用 ASCII 点，固件字体缺"…"字形） */
     private String truncate(Paint p, String text, int maxWidth) {
         if (UiTheme.measure(p, text) <= maxWidth) {
             return text;
         }
         String s = text;
-        while (s.length() > 1 && UiTheme.measure(p, s + "…") > maxWidth) {
+        while (s.length() > 1 && UiTheme.measure(p, s + "..") > maxWidth) {
             s = s.substring(0, s.length() - 1);
         }
-        return s + "…";
+        return s + "..";
     }
 }

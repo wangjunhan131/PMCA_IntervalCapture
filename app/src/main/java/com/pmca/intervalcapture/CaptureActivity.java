@@ -64,6 +64,8 @@ public class CaptureActivity extends Activity {
     private SettingsStore store;
     private IntervalScheduler scheduler;
     private CaptureService captureService;
+    /** v1.1.0：曝光控制（光圈/快门/ISO/AE 锁），任务开始时下发一次 */
+    private final ExposureController exposureController = new ExposureController();
     private HealthMonitor healthMonitor;
     private SettingsScreen settingsScreen;
     private RunScreen runScreen;
@@ -238,7 +240,7 @@ public class CaptureActivity extends Activity {
      * 否则界面会白屏、按键无响应。
      */
     private void openCameraAsync() {
-        cameraStatusLine = "正在打开相机…";
+        cameraStatusLine = "正在打开相机...";
         invalidate();
         new Thread(new Runnable() {
             @Override
@@ -391,12 +393,24 @@ public class CaptureActivity extends Activity {
 
     /* ============================ 主循环：刷新 + 节拍 ============================ */
 
+    /**
+     * v1.1.0 卡顿优化：
+     *   - 节拍逻辑（判断到点、超时）仍每 100ms 跑一次，保证 0.1 秒精度；
+     *   - 但重绘【按模式分级】：参数页/弹窗没有动态内容，500ms 刷一次足够；
+     *     运行页有 0.1 秒倒计时和进度条，保持 100ms。
+     *   之前固定每 100ms 全量 onDraw，是相机上感觉卡顿的主因（固件 GPU 弱，
+     *     每帧自绘几十个 drawText/drawRect 的开销不小）。
+     */
+    private static final long TICK_IDLE_MS = 500;
+
     private final Runnable tickRunnable = new Runnable() {
         @Override
         public void run() {
             doTick();
             invalidate();
-            uiHandler.postDelayed(this, TICK_MS);
+            // 按当前模式决定下一次重绘间隔
+            long delay = (mode == MODE_RUNNING) ? TICK_MS : TICK_IDLE_MS;
+            uiHandler.postDelayed(this, delay);
         }
     };
 
@@ -468,7 +482,7 @@ public class CaptureActivity extends Activity {
             // 相机没打开成功：重新尝试一次
             AppLog.warn("相机未就绪，重新打开");
             openCameraAsync();
-            message = "相机未就绪，正在重新初始化…";
+            message = "相机未就绪，正在重新初始化...";
             messageIsError = true;
             invalidate();
             return;
@@ -479,6 +493,18 @@ public class CaptureActivity extends Activity {
         scheduler = new IntervalScheduler(settings.copy());
         scheduler.setListener(schedulerListener);
 
+        // ---------- v1.1.0：曝光控制下发 ----------
+        // 应用接管模式下，在第一张拍摄前把光圈/快门/ISO/AE 锁的意图
+        // 下发到相机固件（走 CameraEx.createParametersModifier，见 ExposureController）。
+        // 必须在相机 open 之后调用；任何单项失败都不阻断任务（尽力而为）。
+        if (exposureController != null && captureService != null && captureService.isOpened()) {
+            int er = exposureController.apply(captureService.getCameraEx(), settings);
+            if (er == ExposureController.RESULT_PARTIAL && exposureController.getLastNotice() != null) {
+                message = exposureController.getLastNotice();
+                messageIsError = false;
+            }
+        }
+
         // 打开温度监控
         healthMonitor.open();
 
@@ -486,7 +512,7 @@ public class CaptureActivity extends Activity {
         applyPreviewVisibility(settings.isPreviewEnabled());
 
         mode = MODE_RUNNING;
-        message = "开始拍摄（" + settings.formatInterval() + " × "
+        message = "开始拍摄（" + settings.formatInterval() + " x "
                 + (settings.isInfiniteCount() ? "无限" : settings.getEffectiveShotCount() + "张") + "）";
         messageIsError = false;
         scheduler.start();
@@ -689,7 +715,7 @@ public class CaptureActivity extends Activity {
                         "知道了", "取消", 0, 0);
                 break;
             case CameraKeyRouter.ACTION_BACK:
-                showConfirmDialog("退出应用？", "按“确认”返回相机原生拍摄界面。",
+                showConfirmDialog("退出应用？", "按[确认]返回相机原生拍摄界面。",
                         "取消", "退出", 0, CONFIRM_EXIT_APP);
                 break;
             default:
@@ -731,7 +757,7 @@ public class CaptureActivity extends Activity {
             case CameraKeyRouter.ACTION_LEFT:
             case CameraKeyRouter.ACTION_RIGHT:
                 // 运行中不允许改参数：提示用户先停止，避免节拍混乱
-                message = "运行中不可修改参数，请按“下”停止后再调整";
+                message = "运行中不可修改参数，请按[下]停止后再调整";
                 messageIsError = false;
                 break;
             case CameraKeyRouter.ACTION_BACK:

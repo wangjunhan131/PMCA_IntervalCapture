@@ -11,8 +11,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pmca.intervalcapture"
-    android:versionCode="3"
-    android:versionName="1.0.2">
+    android:versionCode="4"
+    android:versionName="1.1.0">
 
     <!-- 允许打开相机硬件（静态照片捕获必需） -->
     <uses-permission android:name="android.permission.CAMERA" />

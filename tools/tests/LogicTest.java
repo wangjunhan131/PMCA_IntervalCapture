@@ -37,6 +37,7 @@ public final class LogicTest {
         testOverrunDetected();
         testInfiniteModeNoFinish();
         testHardwareWarning();
+        testExposureSettings();
 
         System.out.println();
         System.out.println("==== 测试结果：通过 " + passed + " 项，失败 " + failed + " 项 ====");
@@ -70,8 +71,8 @@ public final class LogicTest {
 
     private static void testIntervalClamp() {
         CaptureSettings s = new CaptureSettings();
-        s.setIntervalDeciseconds(1);          // 低于下限 1.0 秒
-        eq("间隔下限钳制为 1.0 秒", 10, s.getIntervalDeciseconds());
+        s.setIntervalDeciseconds(0);          // 低于下限 0.1 秒
+        eq("间隔下限钳制为 0.1 秒", 1, s.getIntervalDeciseconds());
         s.setIntervalDeciseconds(999999);     // 超过上限 3600 秒
         eq("间隔上限钳制为 3600 秒", 36000, s.getIntervalDeciseconds());
         s.setIntervalDeciseconds(25);
@@ -79,17 +80,22 @@ public final class LogicTest {
         eq("间隔 2.5 秒格式化为文本", "2.5 秒", s.formatInterval());
         s.setIntervalDeciseconds(20);
         eq("整秒格式化不带小数点", "2 秒", s.formatInterval());
+        s.setIntervalDeciseconds(5);
+        eq("间隔 0.5 秒格式化为文本", "0.5 秒", s.formatInterval());
     }
 
     private static void testIntervalStep() {
         CaptureSettings s = new CaptureSettings();
+        s.setIntervalDeciseconds(1);         // 0.1 秒（v1.1.0 起允许）
+        s.adjust(CaptureSettings.FIELD_INTERVAL, 1);
+        eq("0.1 秒向上一步为 0.2 秒", 2, s.getIntervalDeciseconds());
+        s.adjust(CaptureSettings.FIELD_INTERVAL, -1);
+        eq("0.2 秒向下一步回到 0.1 秒", 1, s.getIntervalDeciseconds());
+        s.adjust(CaptureSettings.FIELD_INTERVAL, -1);
+        eq("0.1 秒向下一步不会被压到下限以下", 1, s.getIntervalDeciseconds());
         s.setIntervalDeciseconds(10);        // 1.0 秒
         s.adjust(CaptureSettings.FIELD_INTERVAL, 1);
         eq("1.0 秒向上一步为 1.1 秒", 11, s.getIntervalDeciseconds());
-        s.adjust(CaptureSettings.FIELD_INTERVAL, -1);
-        eq("1.1 秒向下一步回到 1.0 秒", 10, s.getIntervalDeciseconds());
-        s.adjust(CaptureSettings.FIELD_INTERVAL, -1);
-        eq("1.0 秒向下一步不会被压到 1 秒以下", 10, s.getIntervalDeciseconds());
     }
 
     private static void testShotCountClamp() {
@@ -309,5 +315,91 @@ public final class LogicTest {
         s.setPreviewEnabled(false);
         s.setImageFormat(CaptureSettings.FORMAT_JPG_PLUS_RAW);
         check("1.2 秒 + RAW 应给出硬件告警", s.getHardwareWarning() != null, "没有告警");
+    }
+
+    /* ==================== v1.1.0：曝光控制参数测试 ==================== */
+
+    private static void testExposureSettings() {
+        CaptureSettings s = new CaptureSettings();
+        // 默认值：跟随机内 + 各项不变 + ISO 自动
+        eq("默认曝光模式为跟随机内", CaptureSettings.EXP_MODE_CAMERA, s.getExposureMode());
+        eq("默认光圈步进为 0", 0, s.getApertureSteps());
+        eq("默认快门步进为 0", 0, s.getShutterSteps());
+        eq("默认 ISO 为自动", CaptureSettings.ISO_AUTO, s.getIsoValue());
+        eq("默认参数项数为 10", 10, CaptureSettings.FIELD_COUNT);
+
+        // 曝光模式切换（开关型：左右键都切换）
+        s.adjust(CaptureSettings.FIELD_EXPOSURE_MODE, 1);
+        eq("曝光模式切换为应用接管", CaptureSettings.EXP_MODE_APP, s.getExposureMode());
+        s.adjust(CaptureSettings.FIELD_EXPOSURE_MODE, -1);
+        eq("曝光模式切回跟随机内", CaptureSettings.EXP_MODE_CAMERA, s.getExposureMode());
+
+        // 跟随机内模式下，光圈/快门/ISO 三项不允许调整
+        s.adjust(CaptureSettings.FIELD_APERTURE, 1);
+        eq("跟随机内时光圈不可调", 0, s.getApertureSteps());
+
+        // 应用接管模式下调整光圈（+1 = 收小一档）
+        s.adjust(CaptureSettings.FIELD_EXPOSURE_MODE, 1);
+        s.adjust(CaptureSettings.FIELD_APERTURE, 1);
+        eq("光圈 +1 档", 1, s.getApertureSteps());
+        s.adjust(CaptureSettings.FIELD_APERTURE, 1);
+        eq("光圈 +2 档", 2, s.getApertureSteps());
+        s.adjust(CaptureSettings.FIELD_APERTURE, -1);
+        eq("光圈回到 +1 档", 1, s.getApertureSteps());
+
+        // 步进上下限钳制（±10）
+        for (int i = 0; i < 20; i++) {
+            s.adjust(CaptureSettings.FIELD_APERTURE, 1);
+        }
+        eq("光圈步进钳制在 +10", 10, s.getApertureSteps());
+        for (int i = 0; i < 30; i++) {
+            s.adjust(CaptureSettings.FIELD_APERTURE, -1);
+        }
+        eq("光圈步进钳制在 -10", -10, s.getApertureSteps());
+
+        // 快门步进
+        s.adjust(CaptureSettings.FIELD_SHUTTER, 1);
+        eq("快门 +1 档（更慢）", 1, s.getShutterSteps());
+        s.adjust(CaptureSettings.FIELD_SHUTTER, -3);
+        eq("快门 -2 档（更快）", -2, s.getShutterSteps());
+
+        // ISO 循环：AUTO(0) → 100 → 200 → ... → 25600 → 回到 AUTO
+        s.adjust(CaptureSettings.FIELD_ISO, 1);
+        eq("ISO 从 AUTO 到 100", 100, s.getIsoValue());
+        s.adjust(CaptureSettings.FIELD_ISO, -1);
+        eq("ISO 从 100 回到 AUTO", CaptureSettings.ISO_AUTO, s.getIsoValue());
+        s.adjust(CaptureSettings.FIELD_ISO, -1);
+        eq("ISO 从 AUTO 向下循环到 25600", 25600, s.getIsoValue());
+        s.adjust(CaptureSettings.FIELD_ISO, 1);
+        eq("ISO 从 25600 回到 AUTO", CaptureSettings.ISO_AUTO, s.getIsoValue());
+
+        // 格式化文本
+        s.setExposureMode(CaptureSettings.EXP_MODE_APP);
+        s.setApertureSteps(2);
+        s.setShutterSteps(-1);
+        s.setIsoValue(400);
+        check("应用接管+光圈+2 显示包含[收小]", s.formatAperture().contains("收小"), s.formatAperture());
+        check("应用接管+快门-1 显示包含[更快]", s.formatShutter().contains("更快"), s.formatShutter());
+        eq("ISO 400 显示文本", "ISO 400", s.formatIso());
+        s.setExposureMode(CaptureSettings.EXP_MODE_CAMERA);
+        eq("跟随机内时光圈显示跟随机内", "（跟随机内）", s.formatAperture());
+
+        // 序列化往返
+        s.setExposureMode(CaptureSettings.EXP_MODE_APP);
+        s.setApertureSteps(-3);
+        s.setShutterSteps(4);
+        s.setIsoValue(1600);
+        CaptureSettings r = CaptureSettings.fromPersistLine(s.toPersistLine());
+        eq("序列化往返 曝光模式", CaptureSettings.EXP_MODE_APP, r.getExposureMode());
+        eq("序列化往返 光圈", -3, r.getApertureSteps());
+        eq("序列化往返 快门", 4, r.getShutterSteps());
+        eq("序列化往返 ISO", 1600, r.getIsoValue());
+
+        // 旧版本持久化行（没有曝光四键）兼容
+        CaptureSettings old = CaptureSettings.fromPersistLine(
+                "interval=25;infinite=false;count=100;format=1;lock=true;preview=false");
+        eq("旧版本行解析 曝光模式默认跟随机内", CaptureSettings.EXP_MODE_CAMERA, old.getExposureMode());
+        eq("旧版本行解析 光圈默认 0", 0, old.getApertureSteps());
+        eq("旧版本行解析 间隔仍正确", 25, old.getIntervalDeciseconds());
     }
 }

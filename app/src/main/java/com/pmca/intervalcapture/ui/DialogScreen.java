@@ -73,11 +73,12 @@ public final class DialogScreen {
         UiTheme.drawTextCentered(canvas, chooseVideo ? optionFocusPaint : optionPaint, "是（生成视频）", yesRect);
 
         // 说明：默认关闭视频合成
-        canvas.drawText("默认不生成视频；选择“是”后才会调用视频合成功能（可选附加项）。",
+        // 注意：屏幕绘制字符串里不用弯引号“”，固件字体表缺这两个字形会显示成方框
+        canvas.drawText("默认不生成视频；选[是]后才会调用视频合成功能（可选附加项）。",
                 BOX.left + 24, BOX.top + 286, hintPaint);
 
         // 按键提示
-        canvas.drawText("左/右 切换选项    确认 确定    菜单 直接选择“否”并退出",
+        canvas.drawText("左/右 切换选项    确认 确定    菜单 直接选[否]并退出",
                 BOX.left + 24, BOX.bottom - 18, hintPaint);
     }
 
@@ -159,7 +160,7 @@ public final class DialogScreen {
             if (out.size() >= 3) {
                 // 最多显示 3 行，剩余截断
                 if (start < text.length()) {
-                    out.set(out.size() - 1, out.get(out.size() - 1).substring(0, Math.max(0, out.get(out.size() - 1).length() - 1)) + "…");
+                    out.set(out.size() - 1, out.get(out.size() - 1).substring(0, Math.max(0, out.get(out.size() - 1).length() - 1)) + "...");
                 }
                 break;
             }
