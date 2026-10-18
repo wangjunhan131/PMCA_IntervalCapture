@@ -206,9 +206,10 @@ public final class LogicTest {
         eq("已拍张数 1", 1, sch.getTakenCount());
         eq("文件名回调正确", "DSC00001.JPG", rec.lastFile);
 
-        // 刚存完，倒计时应接近 1 秒
+        // 刚存完，倒计时应接近 1 秒（v1.1.1 节拍器语义：下一拍=上一拍计划时刻+间隔，
+        // 首张处理耗时会吃掉一部分倒计时，所以下限放宽到 0）
         long cd = sch.getCountdownMillis();
-        check("第 1 张存完后倒计时约 1 秒", cd > 800 && cd <= 1000, "实际 " + cd + " ms");
+        check("第 1 张存完后倒计时不超过 1 秒", cd > 0 && cd <= 1000, "实际 " + cd + " ms");
         check("刚存完时不应立即触发", !sch.shouldTriggerNow(), "立即触发了");
 
         // 等待间隔过去

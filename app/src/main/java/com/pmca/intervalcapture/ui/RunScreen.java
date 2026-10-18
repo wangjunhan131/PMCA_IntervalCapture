@@ -94,12 +94,12 @@ public final class RunScreen {
         // ---------- 左侧信息区（宽 344）----------
         int leftW = PREVIEW_RECT.left;
 
-        // 已拍张数（大号）
-        canvas.drawText("已拍张数", 16, 78, labelPaint);
+        // 已拍张数（大号）——v1.1.1：字号 72→60，避免数字下沿压到 y=186 的剩余张数行
+        canvas.drawText("已拍张数", 16, 74, labelPaint);
         int taken = scheduler.getTakenCount();
         // 无限模式张数可能很大，字号自适应
-        hugePaint.setTextSize(taken >= 10000 ? 54f : 72f);
-        UiTheme.drawTextRight(canvas, hugePaint, String.valueOf(taken), leftW - 16, 150);
+        hugePaint.setTextSize(taken >= 10000 ? 46f : 60f);
+        UiTheme.drawTextRight(canvas, hugePaint, String.valueOf(taken), leftW - 16, 138);
 
         // 剩余张数 / 总张数
         int remain = scheduler.getRemainingCount();
@@ -124,8 +124,8 @@ public final class RunScreen {
             UiTheme.drawTextRight(canvas, hintPaint, percent + "%", barRight, barY + 28);
         }
 
-        // ---------- 倒计时 ----------
-        canvas.drawText("距下一张", 16, 272, labelPaint);
+        // ---------- 倒计时（v1.1.1：字号 72→56，避免字面下沿压住 y=352 的"上张耗时"行造成重叠） ----------
+        canvas.drawText("距下一张", 16, 264, labelPaint);
         long countdown = scheduler.getCountdownMillis();
         String cdText;
         if (state == IntervalScheduler.STATE_PAUSED) {
@@ -134,12 +134,12 @@ public final class RunScreen {
             cdText = "--.-";
         } else if (scheduler.isShotInFlight()) {
             cdText = "拍摄中";
-            hugePaint.setTextSize(48f);
+            hugePaint.setTextSize(42f);
         } else {
             cdText = UiTheme.secondsText(countdown) + " 秒";
-            hugePaint.setTextSize(64f);
+            hugePaint.setTextSize(56f);
         }
-        UiTheme.drawTextRight(canvas, hugePaint, cdText, leftW - 16, 324);
+        UiTheme.drawTextRight(canvas, hugePaint, cdText, leftW - 16, 318);
         hugePaint.setTextSize(72f);
 
         // 最近一张耗时 / 失败张数 / 节拍溢出次数

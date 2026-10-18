@@ -270,25 +270,32 @@ public final class IntervalScheduler {
     }
 
     /**
-     * 计算下一张的计划时刻：
-     *   - 正常情况下：本张完成时刻 + 间隔（这样每张之间的“完成→开始”间隔严格等于设定值）；
-     *   - 若本张耗时已经超过设定间隔（例如长曝光 3 秒但间隔设 1 秒），
-     *     则立刻开始下一张，并累加溢出计数，让界面能提示“间隔无法严格维持”。
-     * 无限模式与固定张数模式使用完全相同的规则。
+     * 计算下一张的计划时刻（v1.1.1 节拍语义修正）：
+     *
+     * 旧行为：下一张 = 本张完成时刻 + 间隔。当单张耗时（对焦 + 曝光 + 写卡，
+     * 真机上常达数秒）不可忽略时，实际节奏变成“单张耗时 + 间隔”，用户设置的
+     * 1 秒间隔在真机上表现为十几秒，与直觉严重不符——这是用户反馈“实际间隔
+     * 高达 10 多秒”的根因之一。
+     *
+     * 新行为：以下一张应当触发的绝对节拍为锚（节拍器语义）：
+     *   - 正常：nextShotAtNanos += intervalMs（从上一张计划时刻累加间隔），
+     *     即无论上一张拍了多久，两次“触发动作”之间的目标间隔严格等于设定值；
+     *   - 若该时刻已过（单张耗时超过间隔，例如长曝光），立即触发并累加溢出
+     *     计数，界面提示“间隔无法严格维持”。
+     * 首张触发时刻由 start() 设定，后续依次累加，漂移不累积到下一张。
      */
     private void scheduleNext() {
         long intervalMs = settings.getIntervalMillis();
-        if (lastShotDurationMs >= intervalMs) {
+        long now = System.nanoTime();
+        // 以“上一次计划触发时刻 + 间隔”为下一拍；计划时刻缺失时退回当前时刻
+        long base = (nextShotAtNanos > 0) ? nextShotAtNanos : now;
+        long planned = base + intervalMs * 1000000L;
+        if (planned <= now) {
+            // 已错过节拍：单张耗时超过间隔（溢出）。立刻触发，并记录溢出次数。
             overrunCount++;
-            // 本张耗时已超过间隔：上一张刚开始后 intervalMs 的那一拍已经被“吃掉”，
-            // 直接按“本张开始 + 间隔”排下去即可；若这个时刻也已过去则立刻连拍。
-            nextShotAtNanos = shotStartNanos + intervalMs * 1000000L;
-            if (nextShotAtNanos < System.nanoTime()) {
-                nextShotAtNanos = System.nanoTime();
-            }
+            nextShotAtNanos = now;
         } else {
-            // 正常情况：下一张在“本张完成时刻 + 间隔”触发
-            nextShotAtNanos = shotStartNanos + (lastShotDurationMs + intervalMs) * 1000000L;
+            nextShotAtNanos = planned;
         }
     }
 

@@ -94,6 +94,13 @@ public final class CaptureService {
     /** 本次触发拍摄前预览是否在运行：快门回调后需要恢复预览 */
     private boolean restorePreviewAfterShot = false;
 
+    /**
+     * v1.1.1：本次任务是否已做过“空预览兜底”。
+     * 某些固件要求拍摄前预览至少启动过一次，否则 takePicture 报错；
+     * 但只需一次，旧版每张重复做会拖慢实际节拍。任务开始时重置。
+     */
+    private boolean emptyPreviewDone = false;
+
     public CaptureService(CaptureCallback callback) {
         this.callback = callback;
     }
@@ -111,6 +118,7 @@ public final class CaptureService {
         close();
         this.lockAeAf = lockAeAfOnFirst;
         this.firstShotDone = false;
+        this.emptyPreviewDone = false;   // v1.1.1：新任务重新允许一次空预览兜底
         try {
             // ① 调用 Sony 的【静态工厂方法】CameraEx.open(cameraId, options) 打开相机。
             //    ★ 注意：在索尼固件里 open 是 public static 方法，
@@ -305,14 +313,17 @@ public final class CaptureService {
             return false;
         }
         try {
-            if (!previewRunning) {
-                // 某些固件在“不预览”状态下拍摄前需要一次空预览启动，否则返回错误；
-                // 这里用异常捕获兜底，失败也不影响后续 takePicture 的尝试。
+            // v1.1.1：空预览兜底只在本次任务的第一张做一次。
+            // 旧版每张都 startPreview/stopPreview（预览关闭的用户每张多耗几百毫秒，
+            // 是“实际间隔 10 多秒”的根因之一）；固件要求只是“进入拍摄前预览处于
+            // 过启动状态”，一次即可满足，后续张不再重复。
+            if (!previewRunning && !emptyPreviewDone) {
                 try {
                     normalCamera.startPreview();
                     normalCamera.stopPreview();
                 } catch (Throwable ignored) {
                 }
+                emptyPreviewDone = true;
             }
             // 对焦策略：未锁定 AE/AF，或者这是第一张时，才重新对焦
             boolean needFocus = (!lockAeAf) || (!firstShotDone);
@@ -324,9 +335,12 @@ public final class CaptureService {
                 } catch (Throwable t) {
                     AppLog.warn("自动对焦触发失败：" + t.getMessage());
                 }
-                // 给固件一点时间完成测光/对焦（半按快门的等效等待）
+                // 给固件一点时间完成测光/对焦（半按快门的等效等待）。
+                // v1.1.1：等待 600/250ms → 300/150ms。固件 autoFocus 返回时对焦
+                // 马达通常已到位，多出来的等待只拖慢节拍；锁 AE 模式只有首张付出
+                // 这个代价，后续张直接触发。
                 try {
-                    Thread.sleep(lockAeAf ? 600 : 250);
+                    Thread.sleep(lockAeAf ? 300 : 150);
                 } catch (InterruptedException ignored) {
                 }
             }
